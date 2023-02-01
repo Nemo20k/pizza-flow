@@ -3,20 +3,16 @@
 [dough]
 duration_in_sec = 7
 amount = 2
-next_job = 'topping'
 
 [topping]
 duration_in_sec = 4
 amount = 3
-next_job = 'oven'
 
 [oven]
 duration_in_sec = 10
 amount = 1
-next_job = 'serving'
 
 [serving]
 duration_in_sec = 5
 amount = 2
-next_job = 'table'
 
