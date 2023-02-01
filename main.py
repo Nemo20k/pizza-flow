@@ -1,6 +1,7 @@
 from pizza_process import init_pizzeria_workers_and_queues, run_pizzeria, close_pools
 from report import print_report, send_to_mongo
 from pizza import Pizza
+import argparse
 import tomllib
 import logging
 
@@ -14,7 +15,7 @@ def load_toml_file(file_path: str) -> dict():
             f'failed to load toml  file with exception: {e}')
 
 
-def main(workers_config: dict, pizzas_order: dict, mongo_uri: str) -> None:
+def main(workers_config: dict, pizzas_order: dict, use_mongo: bool) -> None:
     """
     args:
         worker_config: dict, with worker names as keys and setting dict {'amount': int, 'duration_in_sec': int}
@@ -27,13 +28,23 @@ def main(workers_config: dict, pizzas_order: dict, mongo_uri: str) -> None:
     report = run_pizzeria(queues, pizzas)
     close_pools(pools)
     print_report(**report)
-    send_to_mongo(report, mongo_uri)
+    if use_mongo:
+        send_to_mongo(report)
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='Process some parameters.')
+    parser.add_argument('--use_mongo', action='store_true', default=False,
+                        help='Indicates whether to use MongoDB.')
+    parser.add_argument('--order_file', type=str, default='./order.toml',
+                        help='The path to the order file.')
+    parser.add_argument('--workers_file', type=str, default='./workers.toml',
+                    help='The path to the worker settings file.')
+    args = parser.parse_args()
     try:
-        workers_config: dict = load_toml_file('./workers.toml')
-        pizzas_order = load_toml_file('./order.toml').get('order', [])
-        main(workers_config, pizzas_order, 'mongodb://localhost:27017/')
+        workers_config: dict = load_toml_file(args.workers_file)
+        pizzas_order = load_toml_file(args.order_file).get('order', [])
+        main(workers_config, pizzas_order, args.use_mongo)
     except Exception as e:
         logging.exception(f'running failed :(  with exception: {e}')
