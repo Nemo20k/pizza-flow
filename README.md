@@ -16,7 +16,7 @@ cd pizza-flow
 ### Usage
  ##### with MongoDB using Docker
  ```bash
- python3 main.py --mongo_uri "mongodb:27017"
+ docker-compose up --build
  ```
 
  #### using Python & Mongo
