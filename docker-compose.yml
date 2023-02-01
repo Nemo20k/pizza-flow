@@ -1,0 +1,18 @@
+version: '3'
+services:
+  python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-python
+    ports:
+      - 5000:5000
+    depends_on:
+      - mongodb
+    links:
+      - mongodb
+  mongodb:
+    build:
+      context: .
+      dockerfile: Dockerfile-mongo
+    ports:
+      - 27017:27017
