@@ -15,7 +15,7 @@ def load_toml_file(file_path: str) -> dict():
             f'failed to load toml  file with exception: {e}')
 
 
-def main(workers_config: dict, pizzas_order: dict, use_mongo: bool) -> None:
+def main(workers_config: dict, pizzas_order: dict, mongo_uri: str) -> None:
     """
     args:
         worker_config: dict, with worker names as keys and setting dict {'amount': int, 'duration_in_sec': int}
@@ -28,15 +28,15 @@ def main(workers_config: dict, pizzas_order: dict, use_mongo: bool) -> None:
     report = run_pizzeria(queues, pizzas)
     close_pools(pools)
     print_report(**report)
-    if use_mongo:
-        send_to_mongo(report)
+    if mongo_uri:
+        send_to_mongo(report, mongo_uri)
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some parameters.')
-    parser.add_argument('--use_mongo', action='store_true', default=False,
-                        help='Indicates whether to use MongoDB.')
+    parser.add_argument('--mongo_uri', type=str, default='',
+                        help='MongoDB URI. if not given does not send')
     parser.add_argument('--order_file', type=str, default='./order.toml',
                         help='The path to the order file.')
     parser.add_argument('--workers_file', type=str, default='./workers.toml',
@@ -45,6 +45,6 @@ if __name__ == '__main__':
     try:
         workers_config: dict = load_toml_file(args.workers_file)
         pizzas_order = load_toml_file(args.order_file).get('order', [])
-        main(workers_config, pizzas_order, args.use_mongo)
+        main(workers_config, pizzas_order, args.mongo_uri)
     except Exception as e:
         logging.exception(f'running failed :(  with exception: {e}')
