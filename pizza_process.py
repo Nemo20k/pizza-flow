@@ -2,6 +2,7 @@ from multiprocessing import Pool, Manager, Queue
 import logging
 import time
 from pizza import Pizza
+from report import build_report
 
 # logging settings
 logging.basicConfig(
@@ -68,24 +69,14 @@ def run_pizzeria(queues: dict[str: Queue], pizzas: list[Pizza]) -> dict:
     # starting by inserting the pizzas to the first queue (dough queue)
     for pizza in pizzas:
         queues[pizza.next_job()].put(pizza)
-    
+
     # Main loop - ends when all the pizza are in the last queue
     while not queues[LAST_STATION].full():
         pass
 
-
     logging.info('Done!')
-    pizzas_report = {
-        'overall_duration': round((time.time() - start_time), 2),
-        'pizzas': {}
-    }
-
-    # adding the pizzas time to the report
-    for _ in pizzas:
-        pizza = queues[LAST_STATION].get()
-        pizzas_report['pizzas'][str(pizza)] = round(
-            pizza.end_time - pizza.start_time, 2)
-    return pizzas_report
+    pizzas = [queues[LAST_STATION].get() for _ in pizzas]
+    return build_report(start_time, pizzas)
 
 
 def close_pools(pools: list[Pool]) -> None:
