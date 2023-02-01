@@ -6,6 +6,7 @@ class Pizza:
     represent a pizza (...)
     the job attribute used as queue for the workers using the next_job()
     """
+
     def __init__(self, order: list[str]):
         self.toppings = order
         self.jobs = ['dough',

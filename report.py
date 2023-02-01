@@ -30,16 +30,17 @@ def print_report(overall_duration: float, pizzas: list[dict]) -> None:
     print(report_text)
 
 
-def send_to_mongo(report_json: dict, mongo_uri: str) -> None:
+def send_to_mongo(report_json: dict, mongo_uri: str = 'mongodb:27017') -> None:
     """sending the report data to mongoDB server"""
     try:
         client = pymongo.MongoClient(mongo_uri)
-        db = client[db_name := "pizza-flow"]
+        db = client[(db_name := "pizza-flow")]
         report_json['timestamp'] = datetime.datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
-        collection = db[collection_name := "pizza-flow-report"]
+        collection = db[(collection_name := "pizza-flow-report")]
         collection.insert_one(report_json)
         logging.info(
             f'report sent to mongoDB server at {mongo_uri}/{db_name}.{collection_name}')
     except Exception as e:
-        raise Exception(f'Failed to send report to mongoDB with exception: {e}')
+        raise Exception(
+            f'Failed to send report to mongoDB with exception: {e}')
