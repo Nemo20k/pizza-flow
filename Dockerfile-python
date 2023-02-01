@@ -2,4 +2,4 @@ FROM python:latest
 WORKDIR '/pizza-flow'
 COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
-CMD ["python", "main.py --mongu_uri mongodb:27017"]
+CMD ["python", "main.py", "--mongo_uri", "mongodb:27017"]
