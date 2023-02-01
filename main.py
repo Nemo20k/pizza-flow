@@ -33,7 +33,7 @@ def main(workers_config: dict, pizzas_order: dict, mongo_uri: str) -> None:
 if __name__ == '__main__':
     try:
         workers_config: dict = load_toml_file('./workers.toml')
-        pizzas_order = load_toml_file('./order.toml ').get('order', [])
+        pizzas_order = load_toml_file('./order.toml').get('order', [])
         main(workers_config, pizzas_order, 'mongodb://localhost:27017/')
     except Exception as e:
         logging.exception(f'running failed :(  with exception: {e}')
