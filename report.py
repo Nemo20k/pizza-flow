@@ -42,4 +42,4 @@ def send_to_mongo(report_json: dict, mongo_uri: str) -> None:
         logging.info(
             f'report sent to mongoDB server at {mongo_uri}/{db_name}.{collection_name}')
     except Exception as e:
-        raise f'Failed to send report to mongoDB with exception: {e}'
+        raise Exception(f'Failed to send report to mongoDB with exception: {e}')
