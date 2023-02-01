@@ -23,10 +23,12 @@ def main(workers_config: dict, pizzas_order: dict, mongo_uri: str) -> None:
         mongo_uri: uri to the mongoDB server
     """
     pizzas = [Pizza(order) for order in pizzas_order]
-    pools, queues = init_pizzeria_workers_and_queues(
+    pools, queues, manager = init_pizzeria_workers_and_queues(
         workers_config, number_of_pizzas=len(pizzas))
     report = run_pizzeria(queues, pizzas)
+    # closing the pools and manager
     close_pools(pools)
+    manager.shutdown()
     print_report(**report)
     if mongo_uri:
         send_to_mongo(report, mongo_uri)
@@ -40,7 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('--order_file', type=str, default='./order.toml',
                         help='The path to the order file.')
     parser.add_argument('--workers_file', type=str, default='./workers.toml',
-                    help='The path to the worker settings file.')
+                        help='The path to the worker settings file.')
     args = parser.parse_args()
     try:
         workers_config: dict = load_toml_file(args.workers_file)

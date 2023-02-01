@@ -36,7 +36,7 @@ def worker(job: str, worker_number: int, queues: dict[str: Queue], duration_in_s
             queues[next_job].put(pizza)
 
 
-def init_pizzeria_workers_and_queues(workers_config: dict, number_of_pizzas: int) -> dict[str: Queue]:
+def init_pizzeria_workers_and_queues(workers_config: dict, number_of_pizzas: int) -> tuple:
     """
     init the queues and workers pool of the pizzeria
     """
@@ -54,7 +54,7 @@ def init_pizzeria_workers_and_queues(workers_config: dict, number_of_pizzas: int
             pool.apply_async(worker,
                              args=(job, i, queues, worker_config['duration_in_sec']))
 
-    return pools, queues
+    return pools, queues, manager
 
 
 def run_pizzeria(queues: dict[str: Queue], pizzas: list[Pizza]) -> dict:
@@ -82,3 +82,4 @@ def run_pizzeria(queues: dict[str: Queue], pizzas: list[Pizza]) -> dict:
 def close_pools(pools: list[Pool]) -> None:
     for pool in pools:
         pool.close()
+    time.sleep(5)
