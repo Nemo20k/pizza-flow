@@ -1,12 +1,9 @@
 from multiprocessing import Pool, Manager, Queue
-from collections import namedtuple
 import logging
-from time import sleep
 import time
-import tomllib
 from pizza import Pizza
-from report import report_data, generate_report
 
+# logging settings
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(message)s',
@@ -19,45 +16,36 @@ LAST_STATION = 'table'
 
 
 def worker(job: str, worker_number: int, queues: dict[str: Queue], duration_in_sec: int):
+    """
+    represent a worker in pool of workers. 
+    constantly look for next job in the matching queue and move it to the next queue.
+    """
     worker_name = f'{job}_{worker_number}'
-    while True:
+    while not (queues[LAST_STATION].full()):
         pizza: Pizza = queues[job].get()
         if pizza:
             if job == FIRST_STATION:
                 pizza.record_start_time()
             logging.error(f'{worker_name}: starting on pizza {pizza}')
-            sleep(duration_in_sec)
+            time.sleep(duration_in_sec)
             logging.error(f'{worker_name}: done on pizza {pizza}')
             next_job = pizza.next_job()
             if next_job == LAST_STATION:
                 pizza.record_service_time()
-                # pizza.service_time = time.time()
             queues[next_job].put(pizza)
 
 
-def load_workers_config(file_path: str) -> dict():
-    try:
-        with open(file_path, 'rb') as f:
-            return tomllib.load(f)
-    except Exception as e:
-        raise Exception(
-            f'failed to load workers_config.toml with exception: {e}')
-
-
-def receive_orders(queues: dict[str: Queue], pizza_list: list):
-    logging.info('The Pizza Flow is open!')
-    pizzas = [Pizza(order) for order in pizza_list]
-    for pizza in pizzas:
-        queues[pizza.next_job()].put(pizza)
-
-
-def start_pizzeria(workers_config_path: str, pizza_orders: list):
-    workers_config = load_workers_config(workers_config_path)
+def init_pizzeria_workers_and_queues(workers_config: dict, number_of_pizzas: int) -> dict[str: Queue]:
+    """
+    init the queues and workers pool of the pizzeria
+    """
     manager = Manager()
     queues = {
         **{job_name: manager.Queue() for job_name in workers_config},
-        LAST_STATION: manager.Queue(maxsize=len(pizza_orders)),
+        # defining the maxsize of the last queue so we can know when it full
+        LAST_STATION: manager.Queue(maxsize=number_of_pizzas),
     }
+    pools = []
     for job, worker_config in workers_config.items():
         # We use manager.queue for shared queue
         pool = Pool(worker_config['amount'])
@@ -65,18 +53,41 @@ def start_pizzeria(workers_config_path: str, pizza_orders: list):
             pool.apply_async(worker,
                              args=(job, i, queues, worker_config['duration_in_sec']))
 
-    report_data['start_time'] = time.time()
-    receive_orders(queues, pizza_orders)
+    return pools, queues
+
+
+def run_pizzeria(queues: dict[str: Queue], pizzas: list[Pizza]) -> dict:
+    """
+    adding the orders into te initial queue and looping while workers are processing the jobs
+    return the report data as dict
+    """
+    # recording for the report
+    start_time = time.time()
+
+    logging.info('The Pizza Flow is open!')
+    # starting by inserting the pizzas to the first queue (dough queue)
+    for pizza in pizzas:
+        queues[pizza.next_job()].put(pizza)
+    
+    # Main loop - ends when all the pizza are in the last queue
     while not queues[LAST_STATION].full():
         pass
+
+
     logging.info('Done!')
-    report_data['end_time'] = time.time()
-    for _ in pizza_orders:
+    pizzas_report = {
+        'overall_duration': round((time.time() - start_time), 2),
+        'pizzas': {}
+    }
+
+    # adding the pizzas time to the report
+    for _ in pizzas:
         pizza = queues[LAST_STATION].get()
-        report_data['pizzas'][str(pizza)] = pizza.end_time - pizza.start_time
-        print(pizza, pizza.end_time - pizza.start_time)
-    generate_report(**report_data)
+        pizzas_report['pizzas'][str(pizza)] = round(
+            pizza.end_time - pizza.start_time, 2)
+    return pizzas_report
 
 
-if __name__ == '__main__':
-    start_pizzeria('./pizza_chefs.toml', [['a'], ['1']])
+def close_pools(pools: list[Pool]) -> None:
+    for pool in pools:
+        pool.close()
