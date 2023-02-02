@@ -4,25 +4,29 @@ import time
 class Pizza:
     """
     represent a pizza (...)
-    the job attribute used as queue for the workers using the next_job()
+    the station attribute used as queue for the workers using the next_station()
     """
+
+    # using the first & last the pipeline can reach start/end
+    first_station = 'dough'
+    last_station = 'table'
 
     def __init__(self, order: list[str]):
         self.toppings = order
-        self.jobs = ['dough',
-                     # another 'topping' job for each topping
-                     *['topping' for _ in order],
-                     'oven',
-                     'serving',
-                     'table'
-                     ]
+        self.stations = ['dough',
+                         # another 'topping' station for each topping
+                         *['topping' for _ in order],
+                         'oven',
+                         'serving',
+                         'table'
+                         ]
         self.start_time = self.end_time = None
 
     def __str__(self) -> str:
         return ','.join(self.toppings)
 
-    def next_job(self):
-        return self.jobs.pop(0)
+    def next_station(self):
+        return self.stations.pop(0)
 
     def record_service_time(self):
         self.end_time = time.time()
