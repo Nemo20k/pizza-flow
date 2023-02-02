@@ -13,12 +13,12 @@ class Pizza:
 
     def __init__(self, order: list[str]):
         self.toppings = order
-        self.stations = ['dough',
+        self.stations = [Pizza.first_station,
                          # another 'topping' station for each topping
                          *['topping' for _ in order],
                          'oven',
                          'serving',
-                         'table'
+                         Pizza.last_station
                          ]
         self.start_time = self.end_time = None
 
